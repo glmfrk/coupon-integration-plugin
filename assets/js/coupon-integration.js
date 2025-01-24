@@ -1,37 +1,48 @@
-jQuery(function($) {
-    jQuery('#subscription-form').on('submit', function(event) {
-        event.preventDefault();
-        var subscription_id = jQuery('#subscription_id').val();
-    
-        jQuery('#error_message').html('');
-        jQuery('#loading_spinner').show();
+document.addEventListener("DOMContentLoaded", function () {
+    const subscriptionForm = document.getElementById("subscription-form");
 
-        if (subscription_id.trim() === '') {
-            jQuery('#error_message').html('<span style="color: red;">Subscription ID is required.</span>');
-            jQuery('#loading_spinner').hide();
-            return;
-        }
+    if (subscriptionForm) {
+        subscriptionForm.addEventListener("submit", function (e) {
+            e.preventDefault();
 
-        jQuery.ajax({
-        type:"POST",
-        url:couponIntegration.ajax_url,
-        data: {action:'coupon_integration_process_subscription',
-            subscription_id: subscription_id,
-        },
-        success:function(response){
-            console.log(response);
-            if (response.success) {
-                jQuery('#error_message').html('<span style="color: green;">' + response.data.message + '</span>');
-            } else {
-                jQuery('#error_message').html('<span style="color: red;">' + response.data.message + '</span>');
+            const subscriptionIdInput = document.getElementById("subscription_id");
+            const errorMessageDiv = document.getElementById("error_message");
+            const loadingSpinner = document.getElementById("loading_spinner");
+
+            if (!subscriptionIdInput.value) {
+                errorMessageDiv.innerHTML = "<p style='color: red;'>Subscription ID is required.</p>";
+                return;
             }
-            jQuery('#loading_spinner').hide();
-        },
-        error: function() {
-            jQuery('#error_message').html('<span style="color: red;">An error occurred, please try again.</span>');
-            jQuery('#loading_spinner').hide();
-        }
-        });
 
-    });
+            // Show loading spinner
+            loadingSpinner.style.display = "block";
+            errorMessageDiv.innerHTML = "";
+
+            // Prepare data for AJAX
+            const formData = new FormData();
+            formData.append("action", "integration_submit_subscription");
+            formData.append("subscription_id", subscriptionIdInput.value);
+
+            // Send the AJAX request
+            fetch(couponIntegration.ajax_url, {
+                method: "POST",
+                body: formData,
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    loadingSpinner.style.display = "none";
+                    console.log(data.data.message);
+                    
+                    if (data.success) {
+                        errorMessageDiv.innerHTML = `<p style='color: green;'>${data.data.message}</p>`;
+                    } else {
+                        errorMessageDiv.innerHTML = `<p style='color: red;'>${data.data.message}</p>`;
+                    }
+                })
+                .catch((error) => {
+                    loadingSpinner.style.display = "none";
+                    errorMessageDiv.innerHTML = "<p style='color: red;'>An error occurred. Please try again.</p>";
+                });
+        });
+    }
 });
