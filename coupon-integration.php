@@ -77,9 +77,13 @@ function integration_submit_subscription() {
 
     $response_code = wp_remote_retrieve_response_code($response);
     $response_body = wp_remote_retrieve_body($response);
+    $response_data = json_decode($response_body, true);
 
     if ($response_code === 200) {
-        wp_send_json_success(['message' => 'Successfully sent subscription ID.', 'data' => $response_body]);
+        wp_send_json_success([
+            'message' => 'Successfully sent subscription ID.',
+            'subscription_id' => $response_data['subscription_id'], // Ensure subscription ID is returned
+        ]);
     } else {
         wp_send_json_error(['message' => 'API responded with an error.', 'data' => $response_body]);
     }
