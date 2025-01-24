@@ -26,10 +26,6 @@ function integration_subscription_id() {
         </div>
     </form>
 
-    <!-- <img src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif"> -->
-
-
-
     <?php
 }
 
@@ -52,15 +48,41 @@ function coupon_integration_enqueue_scripts() {
 }
 
 
-
 // Add AJAX action for subscription field submission
-add_action( 'wp_ajax_integration_submit_subscription', 'integration_submit_subscription' );
-add_action( 'wp_ajax_nopriv_integration_submit_subscription', 'integration_submit_subscription' );
+add_action('wp_ajax_integration_submit_subscription', 'integration_submit_subscription');
+add_action('wp_ajax_nopriv_integration_submit_subscription', 'integration_submit_subscription');
 
 function integration_submit_subscription() {
+    
+    if (empty($_POST['subscription_id'])) {
+        wp_send_json_error(['message' => 'Subscription ID is required.']);
+        exit;
+    }
 
-    $subscription_id = sanitize_text_field( $_POST['subscription_id'] );
-    wp_send_json_success( [ 'message' => $subscription_id ] );
+    $subscription_id = sanitize_text_field($_POST['subscription_id']);
+
+    // Prepare data to send to Website B
+    $api_url = 'https://martiniracinggarage.com.au/wp-json/custom/api/subscriptionid';
+    $response = wp_remote_get($api_url . '?subscription_id=' . urlencode($subscription_id), [
+        'timeout' => 45,
+        'headers' => [
+            'Content-Type' => 'application/json',
+        ],
+    ]);
+
+    if (is_wp_error($response)) {
+        wp_send_json_error(['message' => 'Failed to communicate with the API.']);
+        exit;
+    }
+
+    $response_code = wp_remote_retrieve_response_code($response);
+    $response_body = wp_remote_retrieve_body($response);
+
+    if ($response_code === 200) {
+        wp_send_json_success(['message' => 'Successfully sent subscription ID.', 'data' => $response_body]);
+    } else {
+        wp_send_json_error(['message' => 'API responded with an error.', 'data' => $response_body]);
+    }
 
 }
 

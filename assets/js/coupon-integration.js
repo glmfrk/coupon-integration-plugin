@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then((response) => response.json())
                 .then((data) => {
                     loadingSpinner.style.display = "none";
-                    console.log(data.data.message);
+                    console.log(data);
                     
                     if (data.success) {
                         errorMessageDiv.innerHTML = `<p style='color: green;'>${data.data.message}</p>`;
